@@ -8,4 +8,4 @@ SPEC
 
 Commands:
 
-curl -O https://raw.githubusercontent.com/Alexjptz/Fractal-node/main/elixir_node.sh && chmod +x elixir_node.sh && ./elixir_node.sh
+curl -O https://raw.githubusercontent.com/Alexjptz/Elixir-node/main/elixir_node.sh && chmod +x elixir_node.sh && ./elixir_node.sh

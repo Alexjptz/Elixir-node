@@ -102,6 +102,7 @@ while true; do
             fi
             echo -e "\e[33m--- ПОДГОТОВКА ЗАВЕРШЕНА. PREPARATION COMPLETED ---\e[0m"
             echo ""
+            ;;
         2)
             # install elixir
             echo -e "\e[33mНачинаем установку (Starting installation)...\e[0m"
