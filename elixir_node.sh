@@ -1,4 +1,5 @@
 #!/bin/bash
+
 tput reset
 tput civis
 
