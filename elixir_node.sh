@@ -218,7 +218,7 @@ EOF
             docker logs -f elixir
             ;;
         5)
-            #Delete node
+            # Delete node
             # Stop container
             echo -e "\e[33mОстанавливаем контейнер (Stopping container)...\e[0m"
             if docker stop elixir; then
@@ -250,7 +250,7 @@ EOF
                 echo ""
             fi
 
-            #Starting Node
+            # Delete folder
             echo -e "\e[33mУдаляем env (Deleting env)...\e[0m"
             sleep 1
             if sudo rm -rvf elixir/validator.env; then
@@ -265,7 +265,7 @@ EOF
             echo ""
             ;;
         6)
-            #print node data
+            # Print node data
             echo -e "\e[34mИщем данные ноды (Looking for node data)...\e[0m"
             sleep 2
             sudo cat elixir/validator.env
