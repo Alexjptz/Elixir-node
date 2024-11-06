@@ -9,89 +9,199 @@ show_orange() {
     echo -e "\e[33m$1\e[0m"
 }
 
+show_blue() {
+    echo -e "\e[34m$1\e[0m"
+}
+
+show_green() {
+    echo -e "\e[32m$1\e[0m"
+}
+
+show_red() {
+    echo -e "\e[31m$1\e[0m"
+}
+
+exit_script() {
+    show_red "Скрипт остановлен (Script stopped)"
+        echo ""
+        exit 0
+}
+
+incorrect_option () {
+    echo ""
+    show_red "Неверная опция. Пожалуйста, выберите из тех, что есть."
+    echo ""
+    show_red "Invalid option. Please choose from the available options."
+    echo ""
+}
+
+process_notification() {
+    local message="$1"
+    show_orange "$message"
+    sleep 1
+}
+
+install_or_update_docker() {
+    process_notification "Ищем Docker (Looking for Docker)..."
+    if which docker > /dev/null 2>&1; then
+        show_green "Docker уже установлен (Docker is already installed)"
+        echo
+        # Try to update Docker
+        process_notification "Обновляем Docker до последней версии (Updating Docker to the latest version)..."
+
+        if sudo apt install apt-transport-https ca-certificates curl software-properties-common -y &&
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&
+            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" &&
+            sudo apt-get update &&
+            sudo apt-get install --only-upgrade docker-ce docker-ce-cli containerd.io docker-compose-plugin -y; then
+            sleep 1
+            echo -e "Обновление Docker (Docker update): \e[32mУспешно (Success)\e[0m"
+            echo ""
+        else
+            echo -e "Обновление Docker (Docker update): \e[31мОшибка (Error)\e[0m"
+            echo ""
+        fi
+    else
+        # Install docker
+        show_red "Docker не установлен (Docker not installed)"
+        echo
+        process_notification "\e[33mУстанавливаем Docker (Installing Docker)...\e[0m"
+
+        if sudo apt install apt-transport-https ca-certificates curl software-properties-common -y &&
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" &&
+        sudo apt-get update &&
+        sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y; then
+            sleep 1
+            echo -e "Установка Docker (Docker installation): \e[32mУспешно (Success)\e[0m"
+            echo
+        else
+            echo -e "Установка Docker (Docker installation): \e[31mОшибка (Error)\e[0m"
+            echo
+        fi
+    fi
+}
+
+run_commands() {
+    local commands="$*"
+
+    if eval "$commands"; then
+        sleep 1
+        echo ""
+        show_green "Успешно (Success)"
+        echo ""
+    else
+        sleep 1
+        echo ""
+        show_red "Ошибка (Fail)"
+        echo ""
+    fi
+}
+
+run_commands_info() {
+    local commands="$*"
+
+    if eval "$commands"; then
+        sleep 1
+        echo ""
+        show_green "Успешно (Success)"
+        echo ""
+    else
+        sleep 1
+        echo ""
+        show_blue "Не найден (Not Found)"
+        echo ""
+    fi
+}
+
+run_node_command() {
+    local commands="$*"
+
+    if eval "$commands"; then
+        sleep 1
+        show_green "НОДА ЗАПУЩЕНА (NODE IS RUNNING)!"
+        echo
+    else
+        show_red "НОДА НЕ ЗАПУЩЕНА (NODE ISN'T RUNNING)!"
+        echo
+    fi
+}
+
+stop_and_delete_container_image() {
+    local container_name="$1"
+    local image_name="$2"
+
+    # Stop container
+    process_notification "Останавливаем контейнер (Stopping container)..."
+    run_commands_info "docker stop $container_name"
+
+    # Delete container
+    process_notification "Удаляем контейнер (Deleting container)..."
+    run_commands_info "docker rm $container_name"
+
+    # Delete image
+    process_notification "Удаляем image (Deleting image)..."
+    run_commands_info "docker rmi $image_name"
+}
+
 show_orange "  _______  __       __  ___   ___  __  .______ " && sleep 0.2
 show_orange " |   ____||  |     |  | \  \ /  / |  | |   _  \ " && sleep 0.2
 show_orange " |  |__   |  |     |  |  \  V  /  |  | |  |_)  | " && sleep 0.2
 show_orange " |   __|  |  |     |  |   >   <   |  | |      / " && sleep 0.2
 show_orange " |  |____ |   ----.|  |  /  .  \  |  | |  |\  \----. " && sleep 0.2
 show_orange " |_______||_______||__| /__/ \__\ |__| | _|  ._____| " && sleep 0.2
-echo ""
+echo
 sleep 1
 
 while true; do
-    echo "1. Подготовка к установке Elixir (Preparation)"
-    echo "2. Установка Elixir (Install)"
-    echo "3. Запустить или обновить (Start or update node)"
-    echo "4. Проверить логи (Check logs)"
-    echo "5. Удаление ноды (Delete node)"
-    echo "6. О нодe (About Node)"
-    echo "7. Выход (Exit)"
+    show_green "----- MAIN MENU -----"
+    echo "1. Подготовка (Preparation)"
+    echo "2. Установка Main/Test(Install)"
+    echo "3. Elixir Testnet"
+    echo "4. Elixir Mainnet"
+    echo "5. Выход (Exit)"
     echo ""
     read -p "Выберите опцию (Select option): " option
 
     case $option in
         1)
-            echo -e "\e[33mНачинаем подготовку (Starting preparation)...\e[0m"
-            sleep 1
+            show_orange "Начинаем подготовку (Starting preparation)..."
+            echo
+
             # Update packages
-            echo -e "\e[33mОбновляем пакеты (Updating packages)...\e[0m"
-            if sudo apt update && sudo apt upgrade -y && sudo apt install -y curl git jq lz4 build-essential unzip; then
-                sleep 1
-                echo -e "Обновление пакетов (Updating packages): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "Обновление пакетов (Updating packages): \e[31mОшибка (Error)\e[0m"
-                echo ""
-                exit 1
-            fi
+            show_orange "Обновляем пакеты (Updating packages)..."
+            run_commands "sudo apt update && sudo apt upgrade -y && sudo apt install -y curl git jq lz4 build-essential unzip"
 
             # Install or update Docker
-            if which docker > /dev/null 2>&1; then
-                echo -e "\e[32mDocker уже установлен (Docker is already installed)\e[0m"
-                echo ""
-                # Try to update Docker
-                echo -e "\e[33mОбновляем Docker до последней версии (Updating Docker to the latest version)...\e[0m"
-                sleep 1
+            install_or_update_docker
 
-                if sudo apt install apt-transport-https ca-certificates curl software-properties-common -y &&
-                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&
-                    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" &&
-                    sudo apt-get update &&
-                    sudo apt-get install --only-upgrade docker-ce docker-ce-cli containerd.io docker-compose-plugin -y; then
-                    sleep 1
-                    echo -e "Обновление Docker (Docker update): \e[32mУспешно (Success)\e[0m"
-                    echo ""
-                else
-                    echo -e "Обновление Docker (Docker update): \e[31мОшибка (Error)\e[0m"
-                    echo ""
-                fi
-            else
-                # Install docker
-                echo -e "\e[31mDocker не установлен (Docker not installed)\e[0m"
-                echo ""
-                echo -e "\e[33mУстанавливаем Docker (Installing Docker)...\e[0m"
-                sleep 1
-                if sudo apt install apt-transport-https ca-certificates curl software-properties-common -y &&
-                curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&
-                sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" &&
-                sudo apt-get update &&
-                sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y; then
-                    sleep 1
-                    echo -e "Установка Docker (Docker installation): \e[32mУспешно (Success)\e[0m"
-                    echo ""
-                else
-                    echo -e "Установка Docker (Docker installation): \e[31mОшибка (Error)\e[0m"
-                    echo ""
-                fi
-            fi
-            echo -e "\e[33m--- ПОДГОТОВКА ЗАВЕРШЕНА. PREPARATION COMPLETED ---\e[0m"
-            echo ""
+            echo
+            show_green "--- ПОДГОТОВКА ЗАВЕРШЕНА. PREPARATION COMPLETED ---"
+            echo
             ;;
         2)
             # install elixir
-            echo -e "\e[33mНачинаем установку (Starting installation)...\e[0m"
-            echo ""
-            sleep 2
+            process_notification "Начинаем установку (Starting installation)..."
+            echo
+            show_orange "Which Node?"
+            echo "1. Testnet"
+            echo "2. Mainnet"
+            echo
+            read -p "Выберите опцию (Select option): " option
+
+            case $option in
+                1)
+                    ENV="testnet-3"
+                    ELIXIR_MODE="elixir"
+                    ;;
+                2)
+                    ENV="prod"
+                    ELIXIR_MODE="elixir-mainnet"
+                    ;;
+                *)
+                    incorrect_option
+                    ;;
+            esac
 
             # get data from user
             read -p "Введите имя валидатора (VALIDATOR NAME): " VALIDATOR_NAME
@@ -101,23 +211,14 @@ while true; do
             SERVER_IP=$(hostname -I | awk '{print $1}')
 
             # donwload env
-            echo -e "\e[33mСкачиваем ENV (Downloading env)...\e[0m"
-            sleep 1
-            if mkdir -p elixir && cd elixir && wget https://files.elixir.finance/validator.env; then
-                sleep 1
-                echo -e "ENV скачан (ENV downloaded): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "ENV скачан (ENV downloaded): \e[31mОшибка (Error)\e[0m"
-                echo ""
-            fi
+            process_notification "Скачиваем ENV (Downloading env)..."
+            run_commands "mkdir -p $HOME/$ELIXIR_MODE && cd $HOME/$ELIXIR_MODE && wget https://files.elixir.finance/validator.env"
 
             # rewrite env with user data
-            echo -e "\e[33mПереписываем ENV (Rewriting env)...\e[0m"
-            sleep 2
-            echo ""
+            process_notification "Переписываем ENV (Rewriting env)..."
+            echo
             if cat << EOF > validator.env
-ENV=testnet-3
+ENV=$ENV
 
 STRATEGY_EXECUTOR_IP_ADDRESS=$SERVER_IP
 STRATEGY_EXECUTOR_DISPLAY_NAME=$VALIDATOR_NAME
@@ -126,148 +227,190 @@ SIGNER_PRIVATE_KEY=$EVM_PRIVATE_KEY
 EOF
             then
                 sleep 1
-                echo -e "ENV обновлен (ENV updated): \e[32mУспешно (Success)\e[0m"
-                echo ""
+                show_green "Успешно (Success)"
+                echo
             else
-                echo -e "ENV обновлен (ENV updated): \e[31mОшибка (Error)\e[0m"
-                echo ""
+                show_red "Ошибка (Error)"
+                echo
             fi
 
-            echo -e "\e[33m--- УСТАНОВКА ЗАВЕРШЕНА. INSTALLATION COMPLETED ---\e[0m"
-            echo ""
+            echo
+            show_green "--- УСТАНОВКА ЗАВЕРШЕНА. INSTALLATION COMPLETED ---"
+            echo
             ;;
         3)
-            # Start or update
-            # Stop container
-            echo -e "\e[33mОстанавливаем контейнер (Stopping container)...\e[0m"
-            if docker stop elixir; then
-                sleep 1
-                echo -e "Контейнер остановлен (Container stopped): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "\e[34mКонтейнер не запущен (Container isn't running)\e[0m"
-                echo ""
-            fi
-
-            # Delete container
-            echo -e "\e[33mУдаляем контейнер (Deleting container)...\e[0m"
-            if docker rm elixir; then
-                sleep 1
-                echo -e "Контейнер elixir удален (Container deleted): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "\e[34mКонтейнер elixir не найден (Container doesn't exist)\e[0m"
-                echo ""
-            fi
-
-            # Delete image
-            if docker rmi elixirprotocol/validator:v3; then
-                sleep 1
-                echo -e "Образ elixir удален (Image deleted): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "\e[34mОбраз elixir не найден (Image doesn't exist)\e[0m"
-                echo ""
-            fi
-
-            # download docker image
-            echo -e "\e[33mСкачиваем образ (Downloading image)...\e[0m"
-            sleep 2
-            echo ""
-            if docker pull elixirprotocol/validator:v3; then
-                sleep 1
-                echo -e "Образ скачан (Image downloaded): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "Образ скачан (Image downloaded): \e[31mОшибка (Error)\e[0m"
-                echo ""
-            fi
-
-            #Starting Node
-            echo -e "\e[33mЗапускаем ноду (Starting node)...\e[0m"
+            # TESTNET
+            show_orange "▗▄▄▄▖▗▄▄▄▖ ▗▄▄▖▗▄▄▄▖▗▖  ▗▖▗▄▄▄▖▗▄▄▄▖" && sleep 0.2
+            show_orange "  █  ▐▌   ▐▌     █  ▐▛▚▖▐▌▐▌     █  " && sleep 0.2
+            show_orange "  █  ▐▛▀▀▘ ▝▀▚▖  █  ▐▌ ▝▜▌▐▛▀▀▘  █  " && sleep 0.2
+            show_orange "  █  ▐▙▄▄▖▗▄▄▞▘  █  ▐▌  ▐▌▐▙▄▄▖  █  " && sleep 0.2
+            echo
             sleep 1
-            if sudo docker run -d --env-file /root/elixir/validator.env --name elixir --restart unless-stopped --platform linux/amd64 elixirprotocol/validator:v3; then
-                sleep 1
-                echo -e "\e[32mНода запущена (Node is running)!!!!\e[0m"
-                echo ""
-            else
-                echo -e "\e[31mНе удалось запустить ноду (Failed to start the node)!!!!\e[0m"
-                echo ""
-            fi
+
+            while true; do
+                echo "1. Запустить и обновить/остановить (Start and update/Stop)"
+                echo "2. Проверить логи (Check logs)"
+                echo "3. Удаление ноды (Delete node)"
+                echo "4. О нодe (About Node)"
+                echo "5. Назад (Back)"
+                echo
+                read -p "Выберите опцию (Select option): " option
+
+                case $option in
+                    1)
+                        echo
+                        echo "1. Запустить или обновить (Start or Update)"
+                        echo "2. Остановить (Stop)"
+                        echo
+                        read -p "Выберите опцию (Select option): " option
+
+                        case $option in
+                            1)
+                                # Start or update
+                                stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3"
+
+                                # download docker image
+                                process_notification "Скачиваем образ (Downloading image)..."
+                                run_commands "docker pull elixirprotocol/validator:v3"
+
+                                #Starting Node
+                                process_notification "Запускаем ноду (Starting node)..."
+                                run_node_command "sudo docker run -d --env-file /root/elixir/validator.env --name elixir --restart unless-stopped --platform linux/amd64 elixirprotocol/validator:v3"
+                                echo
+                                ;;
+                            2)
+                                # Stop
+                                stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3"
+                                echo
+                                ;;
+                            *)
+                                incorrect_option
+                                ;;
+                        esac
+                        ;;
+                    2)
+                        # check logs
+                        process_notification "Запускаем логи (Starting the logs)..."
+                        docker logs -f elixir
+                        ;;
+                    3)
+                        # Delete node
+                        stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3"
+
+                        # Delete folder
+                        process_notification "Удаляем env (Deleting env)..."
+                        run_commands_info "sudo rm -rvf $HOME/elixir/validator.env"
+
+                        echo
+                        show_green "--- НОДА УДАЛЕНА. NODE DELETED ---"
+                        echo
+                        ;;
+                    4)
+                        # Print node data
+                        process_notification "Ищем данные ноды (Looking for node data)..."
+                        sudo cat $HOME/elixir/validator.env
+                        echo
+                        ;;
+                    5)
+                        echo
+                        break
+                        ;;
+                    *)
+                    incorrect_option
+                    ;;
+                esac
+            done
             ;;
         4)
-            # check logs
-            echo -e "\e[33mЗапускаем логи (Starting the logs)...\e[0m"
-            sleep 2
-            docker logs -f elixir
+            # MAINNET
+            show_orange "▗▖  ▗▖ ▗▄▖ ▗▄▄▄▖▗▖  ▗▖▗▖  ▗▖▗▄▄▄▖▗▄▄▄▖" && sleep 0.2
+            show_orange "▐▛▚▞▜▌▐▌ ▐▌  █  ▐▛▚▖▐▌▐▛▚▖▐▌▐▌     █  " && sleep 0.2
+            show_orange "▐▌  ▐▌▐▛▀▜▌  █  ▐▌ ▝▜▌▐▌ ▝▜▌▐▛▀▀▘  █  " && sleep 0.2
+            show_orange "▐▌  ▐▌▐▌ ▐▌▗▄█▄▖▐▌  ▐▌▐▌  ▐▌▐▙▄▄▖  █  " && sleep 0.2
+            echo
+
+            while true; do
+                echo "1. Запустить и обновить/остановить (Start and update/Stop)"
+                echo "2. Проверить логи (Check logs)"
+                echo "3. Удаление ноды (Delete node)"
+                echo "4. О нодe (About Node)"
+                echo "5. Назад (Back)"
+                echo
+                read -p "Выберите опцию (Select option): " option
+
+                case $option in
+                    1)
+                        # OPERATING
+                        echo
+                        echo "1. Запустить или обновить (Start or Update)"
+                        echo "2. Остановить (Stop)"
+                        echo
+                        read -p "Выберите опцию (Select option): " option
+
+                        case $option in
+                            1)
+                                # Start or update
+                                stop_and_delete_container_image "elixir_mainnet" "elixirprotocol/validator:latest"
+
+                                # download docker image
+                                process_notification "Скачиваем образ (Downloading image)..."
+                                run_commands "docker pull elixirprotocol/validator:latest"
+
+                                #Starting Node
+                                process_notification "Запускаем ноду (Starting node)..."
+                                run_node_command "sudo docker run -d --env-file /root/elixir-mainnet/validator.env --name elixir_mainnet --restart unless-stopped --platform linux/amd64 elixirprotocol/validator:latest"
+                                echo
+                                ;;
+                            2)
+                                # Stop
+                                stop_and_delete_container_image "elixir_mainnet" "elixirprotocol/validator:latest"
+                                echo
+                                ;;
+                            *)
+                                incorrect_option
+                                ;;
+                        esac
+                        ;;
+                    2)
+                        # logs
+                        process_notification "Запускаем логи (Starting the logs)..."
+                        docker logs -f elixir_mainnet
+                        ;;
+                    3)
+                        # Delete node
+                        stop_and_delete_container_image "elixir-mainnet" "elixirprotocol/validator:latest"
+
+                        # Delete folder
+                        process_notification "Удаляем env (Deleting env)..."
+                        run_commands_info "sudo rm -rvf $HOME/elixir-mainnet/validator.env"
+
+                        echo
+                        show_green "--- НОДА УДАЛЕНА. NODE DELETED ---"
+                        echo
+                        ;;
+                    4)
+                        # Print node data
+                        process_notification "Ищем данные ноды (Looking for node data)..."
+                        sudo cat $HOME/elixir-mainnet/validator.env
+                        echo
+                        ;;
+                    5)
+                        echo
+                        break
+                        ;;
+                    *)
+                    incorrect_option
+                    ;;
+                esac
+            done
             ;;
         5)
-            # Delete node
-            # Stop container
-            echo -e "\e[33mОстанавливаем контейнер (Stopping container)...\e[0m"
-            if docker stop elixir; then
-                sleep 1
-                echo -e "Контейнер остановлен (Container stopped): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "\e[34mКонтейнер не запущен (Container isn't running)\e[0m"
-                echo ""
-            fi
-
-            # Delete container
-            echo -e "\e[33mУдаляем контейнер (Deleting container)...\e[0m"
-            if docker rm elixir; then
-                sleep 1
-                echo -e "Контейнер elixir удален (Container deleted): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "\e[34mКонтейнер elixir не найден (Container doesn't exist)\e[0m"
-                echo ""
-            fi
-
-            if docker rmi elixirprotocol/validator:v3; then
-                sleep 1
-                echo -e "Образ elixir удален (Image deleted): \e[32mУспешно (Success)\e[0m"
-                echo ""
-            else
-                echo -e "\e[34mОбраз elixir не найден (Image doesn't exist)\e[0m"
-                echo ""
-            fi
-
-            # Delete folder
-            echo -e "\e[33mУдаляем env (Deleting env)...\e[0m"
-            sleep 1
-            if sudo rm -rvf elixir/validator.env; then
-                sleep 1
-                echo -e "\e[32mENV удален (ENV Deleted)!!!!\e[0m"
-                echo ""
-            else
-                echo -e "\e[34mENV не найден (ENV doesn't exist)\e[0m"
-                echo ""
-            fi
-            echo -e "\e[33m--- НОДА УДАЛЕНА. NODE DELETED ---\e[0m"
-            echo ""
-            ;;
-        6)
-            # Print node data
-            echo -e "\e[34mИщем данные ноды (Looking for node data)...\e[0m"
-            sleep 2
-            sudo cat elixir/validator.env
-            echo ""
-            ;;
-        7)
             # Stop script and exit
-            echo -e "\e[31mСкрипт остановлен (Script stopped)\e[0m"
-            echo ""
-            exit 0
+            exit_script
             ;;
         *)
             # incorrect options handling
-            echo ""
-            echo -e "\e[31mНеверная опция\e[0m. Пожалуйста, выберите из тех, что есть."
-            echo ""
-            echo -e "\e[31mInvalid option.\e[0m Please choose from the available options."
-            echo ""
+            incorrect_option
             ;;
     esac
 done
