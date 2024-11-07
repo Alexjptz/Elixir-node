@@ -165,11 +165,11 @@ while true; do
 
     case $option in
         1)
-            show_orange "Начинаем подготовку (Starting preparation)..."
+            process_notification "Начинаем подготовку (Starting preparation)..."
             echo
 
             # Update packages
-            show_orange "Обновляем пакеты (Updating packages)..."
+            process_notification "Обновляем пакеты (Updating packages)..."
             run_commands "sudo apt update && sudo apt upgrade -y && sudo apt install -y curl git jq lz4 build-essential unzip"
 
             # Install or update Docker
@@ -248,6 +248,7 @@ EOF
             sleep 1
 
             while true; do
+                show_green "----- TESTNET MENU -----"
                 echo "1. Запустить и обновить/остановить (Start and update/Stop)"
                 echo "2. Проверить логи (Check logs)"
                 echo "3. Удаление ноды (Delete node)"
@@ -330,6 +331,7 @@ EOF
             echo
 
             while true; do
+                show_green "----- MAINNET MENU -----"
                 echo "1. Запустить и обновить/остановить (Start and update/Stop)"
                 echo "2. Проверить логи (Check logs)"
                 echo "3. Удаление ноды (Delete node)"
