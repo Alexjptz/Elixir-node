@@ -268,20 +268,20 @@ EOF
                         case $option in
                             1)
                                 # Start or update
-                                stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3"
+                                stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3-testnet"
 
                                 # download docker image
                                 process_notification "Скачиваем образ (Downloading image)..."
-                                run_commands "docker pull elixirprotocol/validator:v3"
+                                run_commands "docker pull elixirprotocol/validator:v3-testnet"
 
                                 #Starting Node
                                 process_notification "Запускаем ноду (Starting node)..."
-                                run_node_command "sudo docker run -d --env-file /root/elixir/validator.env --name elixir --restart unless-stopped --platform linux/amd64 elixirprotocol/validator:v3"
+                                run_node_command "sudo docker run -d --env-file /root/elixir/validator.env --name elixir --restart unless-stopped --platform linux/amd64 elixirprotocol/validator:v3-testnet"
                                 echo
                                 ;;
                             2)
                                 # Stop
-                                stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3"
+                                stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3-testnet"
                                 echo
                                 ;;
                             *)
@@ -296,7 +296,7 @@ EOF
                         ;;
                     3)
                         # Delete node
-                        stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3"
+                        stop_and_delete_container_image "elixir" "elixirprotocol/validator:v3-testnet"
 
                         # Delete folder
                         process_notification "Удаляем env (Deleting env)..."
