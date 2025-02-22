@@ -272,11 +272,11 @@ EOF
 
                                 # download docker image
                                 process_notification "Скачиваем образ (Downloading image)..."
-                                run_commands "docker pull elixirprotocol/validator:v3-testnet"
+                                run_commands "docker pull elixirprotocol/validator:testnet --platform linux/amd64"
 
                                 #Starting Node
                                 process_notification "Запускаем ноду (Starting node)..."
-                                run_node_command "sudo docker run -d --env-file /root/elixir/validator.env --name elixir --restart unless-stopped --platform linux/amd64 elixirprotocol/validator:v3-testnet"
+                                run_node_command "sudo docker run -d --env-file /root/elixir/validator.env --name elixir --restart unless-stopped --platform linux/amd64 elixirprotocol/validator:testnet"
                                 echo
                                 ;;
                             2)
